@@ -159,7 +159,7 @@ export default class Results extends Vue {
 
         if (value) {
           this.results = JSON.parse(value)
-          this.results = this.results.filter(r => 'Sum'.localeCompare(r.scramble) != 0)
+          this.results = this.results.filter((r: any) => 'Sum'.localeCompare(r.scramble) != 0)
           let tmp = {
             raw: {
               cross: 0,
@@ -168,7 +168,8 @@ export default class Results extends Vue {
               pll: 0,
               auf: 0,
               turns: 0,
-              time: 0
+              time: 0,
+              total: 0
             },
             percentage: {
               cross: 0,
@@ -178,9 +179,10 @@ export default class Results extends Vue {
               auf: 0
             }
           }
-          tmp.raw.total = 0
           let idx = this.results.length
-          for(let solve of this.results) {
+          for(let i = 0; i < this.results.length; i++) {
+            let solve: any
+            solve = this.results[i]
             solve.idx = idx--
             tmp.raw.cross += solve.cross
             tmp.raw.f2l += solve.f2l
