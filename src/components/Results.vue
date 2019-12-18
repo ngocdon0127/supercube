@@ -143,7 +143,7 @@ export default class Results extends Vue {
             }
         })
         localStorage.setItem(this.localStorageKey, JSON.stringify(this.results))
-        window.hihi = Timer
+        // window.hihi = Timer
     }
 
     private loadResults() {
