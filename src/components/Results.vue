@@ -11,12 +11,19 @@
       <td class="text-xs-center">{{ props.item.oll.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.pll.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.auf.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.cross.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.f2l.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.oll.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.pll.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.auf.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.turns }}</td>
-      <td class="text-xs-center">{{ props.item.tps }}</td>
       <td class="text-xs-center">{{ props.item.time.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.tps }}</td>
     </template>
   </v-data-table>
 </template>
+
+
 
 <script lang="ts">
 import { Component, Vue, Prop } from 'vue-property-decorator'
@@ -43,9 +50,14 @@ export default class Results extends Vue {
       { text: 'OLL', value: 'oll', align: 'center' },
       { text: 'PLL', value: 'pll', align: 'center' },
       { text: 'AUF', value: 'auf', align: 'center' },
+      { text: 'Cross %', value: 'cross', align: 'center' },
+      { text: 'F2L %', value: 'f2l', align: 'center' },
+      { text: 'OLL %', value: 'oll', align: 'center' },
+      { text: 'PLL %', value: 'pll', align: 'center' },
+      { text: 'AUF %', value: 'auf', align: 'center' },
       { text: 'Turns', value: 'turns', align: 'center' },
-      { text: 'TPS', value: 'tps', align: 'center' },
-      { text: 'Time', value: 'time', align: 'center', sortable: true }
+      { text: 'Time', value: 'time', align: 'center', sortable: true },
+      { text: 'TPS', value: 'tps', align: 'center' }
     ]
 
     private results: object[] = []
@@ -64,15 +76,74 @@ export default class Results extends Vue {
         this.results.unshift({
             scramble: this.game.scramble.join(' ') || 'Unknown',
             cross: this.seconds(Timer.getCrossSolveTime()),
-            f2l: this.seconds(Timer.getF2l1SolveTime()),
-            oll: this.seconds(Timer.getOllSolveTime()),
-            pll: this.seconds(Timer.getPllSolveTime()),
+            f2l: this.seconds(
+              Timer.getF2l1SolveTime() +
+              Timer.getF2l2SolveTime() +
+              Timer.getF2l3SolveTime() +
+              Timer.getF2l4SolveTime() +
+              Timer.getF2l1InspectionTime() +
+              Timer.getF2l2InspectionTime() +
+              Timer.getF2l3InspectionTime() +
+              Timer.getF2l4InspectionTime()
+              // Timer.getF2lInspectionAndSolveTime()
+            ),
+            oll: this.seconds(Timer.getOllSolveTime() + Timer.getOllInspectionTime()),
+            pll: this.seconds(Timer.getPllSolveTime() + Timer.getPllInspectionTime()),
             auf: this.seconds(Timer.getAUFTime()),
             turns: this.game.turns,
             tps: this.game.tps(),
-            time: this.game.time / 1000
+            time: this.game.time / 1000,
+            raw: {
+              scramble: this.game.scramble.join(' ') || 'Unknown',
+              cross: Timer.getCrossSolveTime(),
+              f2l: {
+                f2l1: {
+                  inspection: Timer.getF2l1InspectionTime(),
+                  solve: Timer.getF2l1SolveTime()
+                },
+                f2l2: {
+                  inspection: Timer.getF2l2InspectionTime(),
+                  solve: Timer.getF2l2SolveTime()
+                },
+                f2l3: {
+                  inspection: Timer.getF2l3InspectionTime(),
+                  solve: Timer.getF2l3SolveTime()
+                },
+                f2l4: {
+                  inspection: Timer.getF2l4InspectionTime(),
+                  solve: Timer.getF2l4SolveTime()
+                }
+              },
+              oll: {
+                inspection: Timer.getOllInspectionTime(),
+                solve: Timer.getOllSolveTime()
+              },
+              pll: {
+                inspection: Timer.getPllInspectionTime(),
+                solve: Timer.getPllSolveTime()
+              },
+              auf: Timer.getAUFTime(),
+              percentage: {
+                cross: Timer.getCrossSolveTime() / this.game.time * 100,
+                f2l: (
+                  Timer.getF2l1SolveTime() +
+                  Timer.getF2l2SolveTime() +
+                  Timer.getF2l3SolveTime() +
+                  Timer.getF2l4SolveTime() +
+                  Timer.getF2l1InspectionTime() +
+                  Timer.getF2l2InspectionTime() +
+                  Timer.getF2l3InspectionTime() +
+                  Timer.getF2l4InspectionTime()
+                  // Timer.getF2lInspectionAndSolveTime()
+                ) / this.game.time * 100,
+                oll: (Timer.getOllSolveTime() + Timer.getOllInspectionTime()) / this.game.time * 100,
+                pll: (Timer.getPllSolveTime() + Timer.getPllInspectionTime()) / this.game.time * 100,
+                auf: Timer.getAUFTime() / this.game.time * 100
+              }
+            }
         })
         localStorage.setItem(this.localStorageKey, JSON.stringify(this.results))
+        window.hihi = Timer
     }
 
     private loadResults() {
@@ -82,6 +153,7 @@ export default class Results extends Vue {
         if (value) {
           this.results = JSON.parse(value)
         }
+
       } catch (Exception) {
         this.results = []
       }
