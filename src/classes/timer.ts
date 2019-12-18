@@ -1,3 +1,5 @@
+import { Giiker } from '@/classes/giiker'
+
 const Marks = {
     start: 'mark-start',
     inspection: 'mark-inspection',
@@ -43,6 +45,7 @@ export default class Timer {
         window.performance.clearMarks()
         window.performance.clearMeasures()
         window.performance.mark(Marks.start)
+        Giiker.startRecordingSolution()
     }
 
     public static crossStarted() {
@@ -134,6 +137,9 @@ export default class Timer {
         window.performance.mark(Marks.solved)
         window.performance.measure(Measurements.solved, Marks.inspection, Marks.solved)
         window.performance.measure(Measurements.auf, Marks.pllSolve, Marks.solved)
+
+        console.log(Giiker.getSolution())
+        Giiker.stopRecordingSolution()
     }
 
     public static getInspectionTime(): number {
@@ -174,6 +180,10 @@ export default class Timer {
 
     public static getF2l4SolveTime(): number {
         return Timer.getTime(Measurements.f2l4Solve, Marks.f2l4Inspection)
+    }
+
+    public static getF2lInspectionAndSolveTime(): number {
+        return Timer.getTime(Measurements.f2l4Solve, Measurements.cross)
     }
 
     public static getOllInspectionTime(): number {

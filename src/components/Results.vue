@@ -5,17 +5,18 @@
     :hide-actions="true"
   >
     <template slot="items" slot-scope="props">
+      <td class="text-xs-center">{{ props.item.idx }}</td>
       <td>{{ props.item.scramble }}</td>
       <td class="text-xs-center">{{ props.item.cross.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.f2l.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.oll.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.pll.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.auf.toFixed(2) }}</td>
-      <td class="text-xs-center">{{ props.item.raw.percentage.cross.toFixed(2) }}</td>
-      <td class="text-xs-center">{{ props.item.raw.percentage.f2l.toFixed(2) }}</td>
-      <td class="text-xs-center">{{ props.item.raw.percentage.oll.toFixed(2) }}</td>
-      <td class="text-xs-center">{{ props.item.raw.percentage.pll.toFixed(2) }}</td>
-      <td class="text-xs-center">{{ props.item.raw.percentage.auf.toFixed(2) }}</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.cross.toFixed(2) }} %</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.f2l.toFixed(2) }} %</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.oll.toFixed(2) }} %</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.pll.toFixed(2) }} %</td>
+      <td class="text-xs-center">{{ props.item.raw.percentage.auf.toFixed(2) }} %</td>
       <td class="text-xs-center">{{ props.item.turns }}</td>
       <td class="text-xs-center">{{ props.item.time.toFixed(2) }}</td>
       <td class="text-xs-center">{{ props.item.tps }}</td>
@@ -30,6 +31,7 @@ import { Component, Vue, Prop } from 'vue-property-decorator'
 import { EventHub, Events } from '@/classes/event-hub'
 import Timer from '@/classes/timer'
 import GameState from '@/classes/game-state'
+import { Giiker } from '@/classes/giiker'
 
 @Component
 export default class Results extends Vue {
@@ -39,6 +41,7 @@ export default class Results extends Vue {
     private localStorageKey = 'results'
 
     private headers = [
+      { text: 'SN', value: 'sn', align: 'center' },
       {
         text: 'Scramble',
         align: 'left',
@@ -93,6 +96,7 @@ export default class Results extends Vue {
             turns: this.game.turns,
             tps: this.game.tps(),
             time: this.game.time / 1000,
+            solution: Giiker.getSolution().join(' ') || 'Unknown',
             raw: {
               scramble: this.game.scramble.join(' ') || 'Unknown',
               cross: Timer.getCrossSolveTime(),
@@ -142,7 +146,10 @@ export default class Results extends Vue {
               }
             }
         })
+        // this.results = this.results.filter(r => 'Sum'.localeCompare(r.scramble) != 0)
         localStorage.setItem(this.localStorageKey, JSON.stringify(this.results))
+
+        this.loadResults()
         // window.hihi = Timer
     }
 
@@ -152,6 +159,66 @@ export default class Results extends Vue {
 
         if (value) {
           this.results = JSON.parse(value)
+          this.results = this.results.filter(r => 'Sum'.localeCompare(r.scramble) != 0)
+          let tmp = {
+            raw: {
+              cross: 0,
+              f2l: 0,
+              oll: 0,
+              pll: 0,
+              auf: 0,
+              turns: 0,
+              time: 0
+            },
+            percentage: {
+              cross: 0,
+              f2l: 0,
+              oll: 0,
+              pll: 0,
+              auf: 0
+            }
+          }
+          tmp.raw.total = 0
+          let idx = this.results.length
+          for(let solve of this.results) {
+            solve.idx = idx--
+            tmp.raw.cross += solve.cross
+            tmp.raw.f2l += solve.f2l
+            tmp.raw.oll += solve.oll
+            tmp.raw.pll += solve.pll
+            tmp.raw.auf += solve.auf
+
+            tmp.raw.turns += solve.turns
+            tmp.raw.time += solve.time
+          }
+          tmp.raw.total += tmp.raw.cross
+          tmp.raw.total += tmp.raw.f2l
+          tmp.raw.total += tmp.raw.oll
+          tmp.raw.total += tmp.raw.pll
+          tmp.raw.total += tmp.raw.auf
+
+          tmp.percentage.cross = tmp.raw.cross / tmp.raw.total * 100
+          tmp.percentage.f2l = tmp.raw.f2l / tmp.raw.total * 100
+          tmp.percentage.oll = tmp.raw.oll / tmp.raw.total * 100
+          tmp.percentage.pll = tmp.raw.pll / tmp.raw.total * 100
+          tmp.percentage.auf = tmp.raw.auf / tmp.raw.total * 100
+
+          this.results.unshift({
+            scramble: 'Sum',
+            cross: tmp.raw.cross,
+            f2l: tmp.raw.f2l,
+            oll: tmp.raw.oll,
+            pll: tmp.raw.pll,
+            auf: tmp.raw.auf,
+            raw: {
+              percentage: tmp.percentage
+            },
+            time: tmp.raw.time,
+            turns: tmp.raw.turns
+          })
+
+          console.log('this.results length', this.results.length);
+          console.log(this.results);
         }
 
       } catch (Exception) {
